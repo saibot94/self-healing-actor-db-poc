@@ -30,6 +30,16 @@ anumite date, stergere, adaugare).
 
 # Implementation
 
+## Teacher's notes:
+Am inteles ce doriti sa realizati.
+Sa proiectati arhitectura si doar cateva functiuni.
+Am ca si intrebari:
+* cum si cand se constata ca s-au pierdut date
+* cine, cand si ce trebuie sa faca pentru recuperare
+
+Astea la prezentare, sa nu le uitati.
+
+## My notes
 
 ### Copyright
 

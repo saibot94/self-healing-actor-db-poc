@@ -8,9 +8,10 @@ compileOrder := CompileOrder.JavaThenScala
 val scalaSuffix = "2.12"
 
 libraryDependencies ++= Seq(
-  "com.typesafe.akka" % s"akka-actor_$scalaSuffix" % "2.5.9",
-  "com.typesafe.akka" % s"akka-agent_$scalaSuffix" % "2.5.9",
-  "org.scalatest" %% "scalatest" % "3.0.4" % "test" 
+  "com.typesafe.akka" %% "akka-agent" % "2.5.9",
+  "com.typesafe.akka" %% "akka-actor" % "2.5.9",
+  "com.typesafe.akka" %% "akka-testkit" % "2.5.9" % Test,
+  "org.scalatest" %% "scalatest" % "3.0.4" % Test
 )
 
 

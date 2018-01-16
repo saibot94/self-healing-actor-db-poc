@@ -7,6 +7,7 @@ import akka.http.scaladsl.server.Directives._
 import akka.pattern.ask
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
+import com.cristis.akka.actors.DataPartitionActor.{Get, GetResult, Put}
 import com.cristis.akka.actors.MasterActor
 import com.cristis.akka.actors.MasterActor.GetChildren
 import spray.json.DefaultJsonProtocol._
@@ -50,13 +51,19 @@ object Main {
   def buildRoutes = path("data") {
     get {
       parameter("key".as[String]) { key =>
-        complete("Not implemented")
+        val response = (masterActor ? Get(key)).mapTo[GetResult]
+        complete {
+           response.map {
+             r => r.value
+           }
+        }
       }
     } ~
       put {
         parameter("key".as[String], "value".as[String]) {
           (key, value) =>
-            complete("Successfully inserted value")
+            masterActor ! Put(key, value)
+            complete("Successfully put value!")
         }
       }
   } ~

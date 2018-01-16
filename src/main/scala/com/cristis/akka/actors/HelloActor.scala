@@ -1,14 +1,18 @@
 package com.cristis.akka.actors
 
-import akka.actor.Actor
+import akka.actor.{Actor, ActorRef, Props}
 
 
-case class Ask(name: String)
-case class Greet(message: String)
+final case class Ask(name: String)
+final case class Greet(message: String)
 
-class HelloActor extends Actor {
+object HelloActor {
+  def props(printerActor: ActorRef): Props = Props(new HelloActor(printerActor))
+}
+
+class HelloActor(printerActor: ActorRef) extends Actor {
   override def receive = {
-    case msg: Ask => sender() ! Greet("Hello " + msg.name)
+    case msg: Ask => printerActor ! Greet("Hello " + msg.name)
     case _ => throw new Exception("Undefined message received")
   }
 }

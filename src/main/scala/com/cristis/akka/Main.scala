@@ -3,26 +3,25 @@ package com.cristis.akka
 import akka.actor.{ActorSystem, Props}
 import akka.pattern.ask
 import akka.util.Timeout
-import com.cristis.akka.actors.{Ask, Greet, HelloActor}
-import scala.concurrent.ExecutionContext.Implicits.global
+import com.cristis.akka.actors.{Ask, Greet, HelloActor, PrinterActor}
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
+
 object Main {
 
   implicit val timeout: Timeout = Timeout(5 seconds)
 
   def main(args: Array[String]): Unit = {
-    println("Hello world!")
 
     val system = ActorSystem("helloSystem")
-    val helloActor = system.actorOf(Props[HelloActor])
+    val printerActor = system.actorOf(Props[PrinterActor])
+    val helloActor = system.actorOf(HelloActor.props(printerActor))
 
 
-    val resp = helloActor ? Ask("Cristi")
-    resp.map {
-      case msg: Greet =>
-        println(s"Got [${msg.message}]")
-    }
+    helloActor ! Ask("Cristi")
+    helloActor ! Ask("Andrei")
+    helloActor ! Ask("Gigel")
 
     Thread.sleep(3000)
     system.terminate() map {

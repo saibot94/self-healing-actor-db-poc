@@ -11,8 +11,18 @@ object HelloActor {
 }
 
 class HelloActor(printerActor: ActorRef) extends Actor {
+
+
+  override def preRestart(reason: Throwable, message: Option[Any]): Unit = {
+    println("I'm in prerestart")
+  }
+
+
+  override def postRestart(reason: Throwable): Unit = {
+    println("I'm in postrestart")
+  }
+
   override def receive = {
     case msg: Ask => printerActor ! Greet("Hello " + msg.name)
-    case _ => throw new Exception("Undefined message received")
   }
 }

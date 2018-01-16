@@ -1,31 +1,50 @@
 package com.cristis.akka
 
-import akka.actor.{ActorSystem, Props}
-import akka.pattern.ask
+import akka.actor.ActorSystem
+import akka.http.scaladsl.Http
+import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
+import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.RouteResult
+import akka.stream.ActorMaterializer
 import akka.util.Timeout
-import com.cristis.akka.actors.{Ask, Greet, HelloActor, PrinterActor}
+import akka.pattern.ask
+import com.cristis.akka.actors.MasterActor
+import com.cristis.akka.actors.MasterActor.Get
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
+import scala.io.StdIn
 import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
 
 object Main {
 
-  implicit val timeout: Timeout = Timeout(5 seconds)
+  implicit val system: ActorSystem = ActorSystem()
+  implicit val materializer: ActorMaterializer = ActorMaterializer()
+  implicit val executionContext: ExecutionContextExecutor = system.dispatcher
+
+  implicit val timeout: Timeout = Timeout(1 second)
+  val masterActor = system.actorOf(MasterActor.props(4), "master")
 
   def main(args: Array[String]): Unit = {
 
-    val system = ActorSystem("helloSystem")
-    val printerActor = system.actorOf(Props[PrinterActor])
-    val helloActor = system.actorOf(HelloActor.props(printerActor))
-
-
-    helloActor ! Ask("Cristi")
-    helloActor ! Ask("Andrei")
-    helloActor ! Ask("Gigel")
-
-    Thread.sleep(3000)
-    system.terminate() map {
-      _ => println("System shut down...")
+    val route = path("auction") {
+      get {
+        val future = (masterActor ? Get).mapTo[List[Int]]
+        complete {
+          future.map {
+            r => r.toString()
+          }
+        }
+      }
     }
+    val bindingFuture = Http().bindAndHandle(route, "localhost", 9000)
+    println("Server online att http://localhost:9000/. Press anykey to stop")
+    StdIn.readLine()
+    bindingFuture
+      .flatMap(_.unbind())
+      .onComplete(_ => system.terminate())
   }
+
+
+
 }

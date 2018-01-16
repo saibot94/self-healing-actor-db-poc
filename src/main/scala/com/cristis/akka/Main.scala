@@ -16,6 +16,12 @@ import scala.io.StdIn
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import spray.json.DefaultJsonProtocol._
+
+case class Resp(resp: List[Int])
+
+
 object Main {
 
   implicit val system: ActorSystem = ActorSystem()
@@ -25,6 +31,7 @@ object Main {
   implicit val timeout: Timeout = Timeout(1 second)
   val masterActor = system.actorOf(MasterActor.props(4), "master")
 
+  implicit val responseFormat = jsonFormat1(Resp)
   def main(args: Array[String]): Unit = {
 
     val route = path("auction") {
@@ -32,7 +39,7 @@ object Main {
         val future = (masterActor ? Get).mapTo[List[Int]]
         complete {
           future.map {
-            r => r.toString()
+            r => Resp(r)
           }
         }
       }

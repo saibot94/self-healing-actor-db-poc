@@ -10,6 +10,7 @@ import scala.concurrent.duration._
 import scala.collection.parallel.mutable._
 import scala.concurrent.duration
 
+
 object MasterActor {
 
   private case object HeartbeatCheckKey
@@ -24,6 +25,8 @@ object MasterActor {
 }
 
 class MasterActor(replication: Int) extends Actor with Timers {
+
+
 
   private val logger: Logger = Logger.getLogger(classOf[MasterActor].getName)
   import MasterActor._

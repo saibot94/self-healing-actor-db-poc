@@ -1,25 +1,26 @@
 package com.cristis.akka
 
-import akka.actor.ActorSystem
+import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.RouteResult
+import akka.pattern.ask
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
-import akka.pattern.ask
 import com.cristis.akka.actors.MasterActor
-import com.cristis.akka.actors.MasterActor.Get
-
-import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
-import scala.io.StdIn
-import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext.Implicits.global
-
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import com.cristis.akka.actors.MasterActor.GetChildren
 import spray.json.DefaultJsonProtocol._
+import spray.json.RootJsonFormat
 
-case class Resp(resp: List[Int])
+import scala.collection.parallel.mutable
+import scala.concurrent.{Await, ExecutionContextExecutor}
+import scala.concurrent.duration._
+import scala.io.StdIn
+
+
+case class ActorHealthcheck(actorPath: String, lastResponse: Double)
+
+case class GetActorsResponse(resp: List[ActorHealthcheck])
 
 
 object Main {
@@ -29,21 +30,14 @@ object Main {
   implicit val executionContext: ExecutionContextExecutor = system.dispatcher
 
   implicit val timeout: Timeout = Timeout(1 second)
-  val masterActor = system.actorOf(MasterActor.props(4), "master")
+  val masterActor: ActorRef = system.actorOf(MasterActor.props(4, executionContext), "master")
 
-  implicit val responseFormat = jsonFormat1(Resp)
+//  implicit val getActorsResponseFormat = jsonFormat1(GetActorsResponse)
+  implicit val actorHealthCheckFormat = jsonFormat2(ActorHealthcheck)
+
   def main(args: Array[String]): Unit = {
 
-    val route = path("auction") {
-      get {
-        val future = (masterActor ? Get).mapTo[List[Int]]
-        complete {
-          future.map {
-            r => Resp(r)
-          }
-        }
-      }
-    }
+    val route = buildRoutes
     val bindingFuture = Http().bindAndHandle(route, "localhost", 9000)
     println("Server online att http://localhost:9000/. Press anykey to stop")
     StdIn.readLine()
@@ -53,5 +47,42 @@ object Main {
   }
 
 
+  def buildRoutes = path("data") {
+    get {
+      parameter("key".as[String]) { key =>
+        complete("Not implemented")
+      }
+    } ~
+      put {
+        parameter("key".as[String], "value".as[String]) {
+          (key, value) =>
+            complete("Successfully inserted value")
+        }
+      }
+  } ~
+    path("data" / "all") {
+      get {
+        complete("hola")
+      }
+    } ~
+    path("actors") {
+      get {
+        val future = (masterActor ? GetChildren).mapTo[mutable.ParHashMap[ActorRef, Long]]
+        val response = future.map { r =>
+          val currentTime = System.currentTimeMillis()
+          val actorHealthchecks = r.map {
+            case (actor, lastTimestamp) =>
+              val path = actor.path.toString
+              ActorHealthcheck(path, (currentTime - lastTimestamp).millis.toUnit(SECONDS))
+          }.toSeq.seq.toList
+          val gar = GetActorsResponse(actorHealthchecks)
+          println("Get actors: " + gar)
+          actorHealthchecks
+        }
+        complete {
+          response.map { r => r }
+        }
+      }
+    }
 
 }

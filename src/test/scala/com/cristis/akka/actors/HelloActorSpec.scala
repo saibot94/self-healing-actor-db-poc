@@ -17,11 +17,5 @@ class HelloActorSpec(_system: ActorSystem) extends TestKit(_system) with Matcher
     shutdown(system)
   }
 
-  "A greeter actor" should "pass on a greeting" in {
-    val testProbe = TestProbe()
-    val person = "Cristi"
-    val helloGreeter = system.actorOf(HelloActor.props(testProbe.ref))
-    helloGreeter ! Ask(person)
-    testProbe.expectMsg(500 millis, Greet(s"Hello $person"))
-  }
+
 }

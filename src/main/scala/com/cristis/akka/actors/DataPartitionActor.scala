@@ -17,6 +17,7 @@ object DataPartitionActor {
   def props(dataActors: Seq[ActorRef], partitions: Int, replication: Int): Props =
     Props(new DataPartitionActor(dataActors, partitions, replication))
 
+  case object Status
   /**
     * Get a data value from a key
     *
@@ -84,7 +85,7 @@ class DataPartitionActor(var dataActors: Seq[ActorRef], partitions: Int, replica
         dataPartitions(i) = dataPartitions(i).filterNot(deadActors.toSet)
 
         // Pick an actor to distribute its data to the newly initiated nodes
-        val actorToDistribute = dataPartitions(i).head
+        val actorToDistribute = findAliveActor(i)
         actorToDistribute ! Distribute(newActorSplits(index))
         dataPartitions(i) ++= newActorSplits(index)
       }
@@ -112,6 +113,17 @@ class DataPartitionActor(var dataActors: Seq[ActorRef], partitions: Int, replica
         }.filter(_._2 != null)
       }
       sender() ! GetChildrenDataResponse(resp)
+  }
+
+  private def findAliveActor(i: Int): ActorRef = {
+    val statuses = dataPartitions(i).map {
+      a => Try(Await.result(a ? Status, 100.millis))
+    }.zip(dataPartitions(i)).filter(_._1.isSuccess).map(_._2)
+    if(statuses.nonEmpty) {
+      statuses.head
+    } else {
+      dataPartitions(i).head
+    }
   }
 
   private def deleteKeyForAll(key: String): Unit = {

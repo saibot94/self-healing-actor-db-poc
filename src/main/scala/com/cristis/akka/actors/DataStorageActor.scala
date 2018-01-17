@@ -50,6 +50,8 @@ class DataStorageActor(heartbeatActor: ActorRef, val id: Int) extends Actor with
         dataStore -= key
       }
       sender() ! "ok"
+
+    case Status => sender() ! Status
   }
 
   override def postRestart(reason: Throwable): Unit = {

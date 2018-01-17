@@ -2,44 +2,45 @@
 
 This is the implementation for `autonomous systems`, ALFP, year 2, West University of Timisoara.
 
-# Task
-
-See transcript below:
-
-
- Ma gandeam sa propun implementarea unei baze de date distribuite 
- care sa aiba urmatoarele doua proprietati ce se refera la sisteme complexe:
-
-* fault tolerance / recovery: mai multe "noduri" care comunica 
-intre ele si sunt coordonate de catre un master; in cazul in 
-care unul dintre ele are probleme sau se defecteaza, el este 
-fie restartat, fie se executa anumite actiuni pentru a-l readuce la stare normala
-* replication: find o baza de date distribuita, datele sunt 
-replicate pe mai multe dintre nodurile acestei baze 
-de date, astfel incat chiar daca se pierde informatia dintr-unul 
-dintre noduri, se poate regasi si pe celelalte. 
-
-
-Din punct de vedere al implementarii, voiam sa folosesc un sistem de 
-actori si un design reactiv, bazat pe operatii asincrone intr-un sistem de 
-actori. Toate mesajele dintre actori vor trece printr-o coada de mesaje (Apache Kafka, ActiveMQ 
-sau RabbitMQ). Pentru demonstrarea abilitatilor de mai sus as putea sa scriu un program ce testeaza 
-functionalitatea sistemului, precum si operatiile de baza pe care le ofera (query dupa 
-anumite date, stergere, adaugare).
-
-
 # Implementation
 
-## Teacher's notes:
-Am inteles ce doriti sa realizati.
-Sa proiectati arhitectura si doar cateva functiuni.
-Am ca si intrebari:
-* cum si cand se constata ca s-au pierdut date
-* cine, cand si ce trebuie sa faca pentru recuperare
+The implementation features an actor system that implements a distributed database, as well as an HTTP server
+to interact with this database.
 
-Astea la prezentare, sa nu le uitati.
+The following functionality is available and provided by the system:
 
-## My notes
+- distributed storage across multiple partitions
+- automatic recovery of failed actors and reloading of data, in order to avoid loss
+
+
+## REST API
+
+The following functionality is provided:
+
+* ` PUT /data ` - with query params key and value, add a piece of data at that specific key
+. If the key already existed, then the previous data is removed.
+* `GET /data ` - query param key; gets the value at that key or an empty response
+in case nothing is there
+* `DELETE /data` - query param `id`; allows the user to remove a piece of data from
+the collection
+* `GET /actors` - get the names and last heartbeat time for all data storage actors
+* `DELETE /actors` - query param `id`; cause the system to kill one of the actors,
+if the id is a correct one. The system will then discover that the actor is dead
+and proceed with replacing it with a new instance
+* `GET /data/all` - get all data from all actors, grouped by partition into different
+lists
+
+
+## Teacher's questions:
+
+Design the architecture and a few functionalities.
+
+Some questions:
+* how and when is it noticed that data has been lost
+* who, when and what must be done in order to finish the data
+
+These at the presentation.
+
 
 ### Copyright
 

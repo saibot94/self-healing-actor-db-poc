@@ -47,8 +47,6 @@ class MasterActor(replication: Int, implicit val ec: ExecutionContext) extends A
     dataPartitionActor = context.system.actorOf(DataPartitionActor.props(childrenDataStorageActors, ReplicationMultiplier, replication))
 
 
-    childrenDataStorageActors.head ! PoisonPill
-    childrenDataStorageActors.tail.head ! Kill
     heartbeatActor ! SetDataActors(childrenDataStorageActors)
   }
 

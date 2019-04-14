@@ -4,6 +4,7 @@ import akka.actor.{ActorRef, ActorSystem, Kill, PoisonPill}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.Route
 import akka.pattern.ask
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
@@ -36,8 +37,8 @@ object Main {
   val masterActor: ActorRef = system.actorOf(MasterActor.props(4, executionContext), "master")
 
   //  implicit val getActorsResponseFormat = jsonFormat1(GetActorsResponse)
-  implicit val actorHealthCheckFormat = jsonFormat2(ActorHealthcheck)
-  implicit val actorDataFormat = jsonFormat2(ActorData)
+  implicit val actorHealthCheckFormat: RootJsonFormat[ActorHealthcheck] = jsonFormat2(ActorHealthcheck)
+  implicit val actorDataFormat: RootJsonFormat[ActorData] = jsonFormat2(ActorData)
 
   def main(args: Array[String]): Unit = {
 
@@ -51,7 +52,7 @@ object Main {
   }
 
 
-  def buildRoutes = path("data") {
+  def buildRoutes: Route = path("data") {
     get {
       parameter("key".as[String]) { key =>
         val response = (masterActor ? Get(key)).mapTo[GetResult]
